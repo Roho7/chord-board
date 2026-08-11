@@ -1,26 +1,44 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/*
+ * Palette: a vintage combo organ under a stage light. Warm near-black ground,
+ * bone-white type, and a single hot ember for anything lit. No blue anywhere —
+ * this is meant to be read out of the corner of your eye in a dim room.
+ */
+@theme {
+  --color-ink: #150f0d;
+  --color-ink-raised: #241a16;
+  --color-ink-edge: #3a2a23;
+  --color-bone: #f4ebdd;
+  --color-bone-dim: #9b8878;
+  --color-ember: #ff5322;
+  --color-ember-soft: #ffa62b;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-ink);
+  color: var(--color-bone);
+  font-family: var(--font-sans), system-ui, sans-serif;
+  /* Nothing here is text you select — dragging across pads shouldn't highlight. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
