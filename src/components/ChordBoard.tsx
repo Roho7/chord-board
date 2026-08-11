@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import type { InstrumentName } from '@/audio/engine';
 import { prefetchTone } from '@/audio/rack';
 import {
@@ -18,6 +18,14 @@ import { chordAt, chordColour, type ChordModifiers, type ExtraVoice } from '@/th
 import { makeScale } from '@/theory/scales';
 import { ChordPad } from './ChordPad';
 import { ScaleSelector } from './ScaleSelector';
+import { SynthPanel } from './SynthPanel';
+
+type View = 'keys' | 'sound';
+
+const VIEWS: ReadonlyArray<{ id: View; label: string }> = [
+  { id: 'keys', label: 'Keys' },
+  { id: 'sound', label: 'Sound' },
+];
 
 export function ChordBoard() {
   useKeyboard();
@@ -40,6 +48,8 @@ export function ChordBoard() {
   const scale = makeScale(root, mode);
   const colour = chordColour(modifiers);
 
+  const [view, setView] = useState<View>('keys');
+
   useEffect(prefetchTone, []);
 
   function handleAttack(degree: number) {
@@ -48,13 +58,13 @@ export function ChordBoard() {
   }
 
   return (
-    <div className="flex w-full flex-col gap-8">
+    <div className="flex min-h-0 w-full flex-1 flex-col gap-6">
       {/*
         Nine columns, each pad spanning two, with the lower row offset by one.
         That reproduces the keyboard's half-key stagger exactly and keeps both
         rows inside the same width — so the pads sit where the keys do.
       */}
-      <div className="grid grid-cols-9 gap-2 sm:gap-3">
+      <div className="grid shrink-0 grid-cols-9 gap-2 sm:gap-3">
         {KEY_ROWS.map((row, rowIndex) =>
           row.map((code, column) => {
             const degree = degreeForCode(code);
@@ -86,17 +96,70 @@ export function ChordBoard() {
         )}
       </div>
 
-      <KeyLegend
-        modifiers={modifiers}
-        sustain={sustain}
-        spread={spread}
-        register={register}
-        extraKeys={extraKeys}
-      />
+      {/* Tabs sit directly under the pads — the pads themselves never move. */}
+      <div
+        role="tablist"
+        aria-label="Panel"
+        className="flex shrink-0 gap-1 self-start rounded-lg bg-ink-raised p-1"
+      >
+        {VIEWS.map(({ id, label }) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={view === id}
+            aria-controls={`panel-${id}`}
+            onClick={() => setView(id)}
+            className={[
+              'rounded-md px-5 py-1.5 font-mono text-sm font-bold tracking-[0.15em] uppercase',
+              'transition-colors',
+              view === id ? 'bg-ember text-ink' : 'text-bone-dim hover:text-bone',
+            ].join(' ')}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-        <ScaleSelector />
-        <InstrumentToggle />
+      {/*
+        Both panels stay mounted and the track slides between them: the keyboard
+        listener lives up here, so you can keep playing while the synth is open.
+      */}
+      <div className="min-h-0 flex-1 overflow-hidden border-t border-ink-edge pt-6">
+        <div
+          className="flex h-full w-[200%] transition-transform duration-300 ease-out"
+          style={{ transform: view === 'keys' ? 'translateX(0)' : 'translateX(-50%)' }}
+        >
+          <section
+            id="panel-keys"
+            role="tabpanel"
+            // The off-screen panel is inert so tabbing can't land inside it.
+            inert={view !== 'keys'}
+            className="flex h-full w-1/2 shrink-0 flex-col justify-center items-center gap-6 overflow-x-hidden overflow-y-auto pr-4 "
+          >
+            <KeyLegend
+              modifiers={modifiers}
+              sustain={sustain}
+              spread={spread}
+              register={register}
+              extraKeys={extraKeys}
+            />
+
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between w-full">
+              <ScaleSelector />
+              <InstrumentToggle />
+            </div>
+          </section>
+
+          <section
+            id="panel-sound"
+            role="tabpanel"
+            inert={view !== 'sound'}
+            className="h-full w-1/2 shrink-0 overflow-x-hidden overflow-y-auto pr-4"
+          >
+            <SynthPanel />
+          </section>
+        </div>
       </div>
     </div>
   );
@@ -212,7 +275,7 @@ function KeyLegend({
                 : control
                   ? 'border-ink-edge bg-ink-raised text-bone-dim'
                   : // Pad keys: shape only, so they recede.
-                    'border-ink-edge/40 text-bone-dim/30',
+                  'border-ink-edge/40 text-bone-dim/30',
             ].join(' ')}
           >
             <span className="font-mono text-[0.6rem] leading-none font-bold">{key}</span>
