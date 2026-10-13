@@ -12,10 +12,12 @@ import {
   retune,
   setInstrument as setRackInstrument,
   setSynthPatch,
+  setStringsPatch as setRackStringsPatch,
   type Voice,
 } from '@/audio/rack';
 import type { InstrumentName } from '@/audio/engine';
 import { DEFAULT_PATCH, type SynthPatch } from '@/audio/synthPatch';
+import { DEFAULT_STRINGS, type StringsPatch } from '@/audio/stringsPatch';
 import {
   buildPadChord,
   chordColour,
@@ -33,10 +35,10 @@ import {
   chordTones,
   GUITAR_WINDOW,
   invertVoicing,
-  ORGAN_WINDOW,
   PAD_WINDOW,
   PIANO_WINDOW,
   spreadVoicing,
+  STRINGS_WINDOW,
   transposeVoicing,
   voice as voiceChord,
   type VoicingWindow,
@@ -44,7 +46,7 @@ import {
 
 const WINDOWS: Record<InstrumentName, VoicingWindow> = {
   synth: PAD_WINDOW,
-  organ: ORGAN_WINDOW,
+  strings: STRINGS_WINDOW,
   piano: PIANO_WINDOW,
   guitar: GUITAR_WINDOW,
 };
@@ -160,6 +162,8 @@ export interface AppState {
   modifiers: ChordModifiers;
   /** The synth's tone. Applies live, including to notes already sounding. */
   patch: SynthPatch;
+  /** The string machine's tone. Live in the same way. */
+  stringsPatch: StringsPatch;
   /**
    * Caps Lock. On, a chord keeps ringing after its key lifts, like a sustain
    * pedal you don't have to hold — but only the latest one. Striking the next
@@ -214,8 +218,10 @@ export interface AppState {
   pressExtra(kind: ExtraVoice): void;
   /** A support key came up. Never sounds anything — silence only. */
   releaseExtra(kind: ExtraVoice): void;
-  /** Change part of the synth patch. Pass no argument to reset it. */
+  /** Change part of the synth patch. Pass null to reset it. */
   setPatch(patch: Partial<SynthPatch> | null): void;
+  /** Change part of the strings patch. Pass null to reset it. */
+  setStringsPatch(patch: Partial<StringsPatch> | null): void;
   attackDegree(degree: number): void;
   releaseDegree(degree: number): void;
   panic(): void;
@@ -229,6 +235,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   samplesReady: { piano: false, guitar: false },
   modifiers: NO_MODIFIERS,
   patch: DEFAULT_PATCH,
+  stringsPatch: DEFAULT_STRINGS,
   sustain: false,
   spread: false,
   register: 0,
@@ -281,6 +288,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     // not after React has re-rendered.
     setSynthPatch(next);
     set({ patch: next });
+  },
+
+  setStringsPatch(patch) {
+    const next = patch === null ? DEFAULT_STRINGS : { ...get().stringsPatch, ...patch };
+    // Audio graph first, same reason: a dragged slider should be heard on this
+    // frame rather than after React has re-rendered.
+    setRackStringsPatch(next);
+    set({ stringsPatch: next });
   },
 
   toggleSpread() {

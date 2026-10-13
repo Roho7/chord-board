@@ -31,7 +31,7 @@ export function Fader({ label, value, min, max, step, format, onChange }: FaderP
         step={step}
         value={value}
         onChange={(event) => onChange(event.target.valueAsNumber)}
-        className="accent-ember h-1.5 w-full cursor-pointer appearance-none rounded-full bg-ink-edge"
+        className="accent-accent h-1.5 w-full cursor-pointer appearance-none rounded-full bg-ink-edge"
       />
     </label>
   );
@@ -65,7 +65,7 @@ export function Choice<T extends string | number>({
             className={[
               'rounded px-2 py-1 font-mono text-[0.7rem] font-bold uppercase transition-colors',
               option.value === value
-                ? 'bg-ember text-ink'
+                ? 'bg-accent text-white'
                 : 'bg-ink text-bone-dim hover:text-bone',
             ].join(' ')}
           >
@@ -86,7 +86,7 @@ export function ControlGroup({
 }) {
   return (
     <section className="flex flex-col gap-3 rounded-lg border border-ink-edge bg-ink-raised p-4">
-      <h3 className="font-mono text-xs font-bold tracking-[0.25em] text-ember uppercase">
+      <h3 className="font-mono text-xs font-bold tracking-[0.25em] text-accent-soft uppercase">
         {title}
       </h3>
       {children}

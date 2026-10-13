@@ -2,7 +2,7 @@
 
 import type { Midi } from '@/theory/notes';
 
-export type InstrumentName = 'synth' | 'organ' | 'piano' | 'guitar';
+export type InstrumentName = 'synth' | 'strings' | 'piano' | 'guitar';
 
 /** Opaque token identifying one sounding chord. */
 export interface VoiceHandle {

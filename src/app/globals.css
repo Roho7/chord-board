@@ -1,18 +1,26 @@
 @import "tailwindcss";
 
 /*
- * Palette: a vintage combo organ under a stage light. Warm near-black ground,
- * bone-white type, and a single hot ember for anything lit. No blue anywhere —
- * this is meant to be read out of the corner of your eye in a dim room.
+ * Palette: the logo's ribbons — ultramarine into violet, with a cream-gold glow
+ * where they cross — over a violet-black ground. The ground stays dark and
+ * still so the only bright, moving thing on screen is a chord that is sounding.
  */
 @theme {
-  --color-ink: #150f0d;
-  --color-ink-raised: #241a16;
-  --color-ink-edge: #3a2a23;
-  --color-bone: #f4ebdd;
-  --color-bone-dim: #9b8878;
-  --color-ember: #ff5322;
-  --color-ember-soft: #ffa62b;
+  --color-ink: #0b0816;
+  --color-ink-raised: #17122b;
+  --color-ink-edge: #2c2450;
+  --color-bone: #f3f0ff;
+  --color-bone-dim: #8f87b0;
+  --color-accent: #6b4bff;
+  --color-accent-soft: #a99bff;
+
+  /* One colour per modifier, shared by the pads and the key legend. */
+  --color-mod-minor: #3a2bd0;
+  --color-mod-seventh: #b24bff;
+  --color-mod-dominant: #ff3fae;
+  --color-mod-suspended: #8fb0ff;
+  --color-mod-ninth: #f5e2a8;
+  --color-mod-bass: #ff6a4d;
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -25,6 +33,11 @@ body {
 
 body {
   background-color: var(--color-ink);
+  background-image:
+    radial-gradient(55% 60% at 0% 0%, rgb(107 75 255 / 0.2), transparent 70%),
+    radial-gradient(50% 55% at 100% 100%, rgb(26 15 255 / 0.18), transparent 70%),
+    radial-gradient(40% 35% at 55% 45%, rgb(245 226 168 / 0.035), transparent 70%);
+  background-attachment: fixed;
   color: var(--color-bone);
   font-family: var(--font-sans), system-ui, sans-serif;
   /* Nothing here is text you select — dragging across pads shouldn't highlight. */
@@ -32,6 +45,113 @@ body {
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior: none;
+}
+
+/*
+ * Pad colour. Registered so the browser can interpolate them: a modifier
+ * changes the values and the pad morphs over 700ms instead of cutting.
+ */
+@property --pad-b {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #7b5cff;
+}
+@property --pad-pool {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+@property --pad-lift {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+@property --pad-sink {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+.pad-tint {
+  transition:
+    --pad-b 700ms ease,
+    --pad-pool 700ms ease,
+    --pad-lift 700ms ease,
+    --pad-sink 700ms ease;
+}
+
+/* Low notes pool warm at the bottom; high notes lift the top; 8vb sinks it. */
+.pad-register {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgb(255 255 255 / calc(var(--pad-lift) * 0.35)), transparent 45%),
+    linear-gradient(to bottom, rgb(8 4 24 / calc(var(--pad-sink) * 0.6)), transparent 70%),
+    radial-gradient(
+      90% calc(var(--pad-pool) * 75%) at 50% 100%,
+      rgb(255 106 77 / calc(var(--pad-pool) * 0.95)),
+      rgb(194 24 91 / calc(var(--pad-pool) * 0.6)) 55%,
+      transparent 100%
+    );
+}
+
+/* The attack: a cream flash that burns off as the drift takes over. */
+.pad-bloom {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(80% 90% at 50% 50%, rgb(255 246 220 / 0.75), transparent 75%);
+  animation: pad-bloom 260ms ease-out forwards;
+}
+
+@keyframes pad-bloom {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Frosted glass letter: milky fill the colour shows through, lit from above. */
+.glass-glyph {
+  color: transparent;
+  background-image: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 0.97) 0%,
+    rgb(255 255 255 / 0.8) 40%,
+    rgb(240 236 255 / 0.62) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-stroke: 1px rgb(255 255 255 / 0.55);
+  filter: drop-shadow(0 1px 0 rgb(255 255 255 / 0.35)) drop-shadow(0 4px 10px rgb(16 6 50 / 0.55));
+}
+
+/*
+ * The selector drums sit straight on the page: three rows tall (the pick and
+ * one either side), no housing, fading out top and bottom. The library sets
+ * the drum height inline, hence !important.
+ */
+.wheel-rack [data-rwp] {
+  height: calc(var(--wheel-item) * 3) !important;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    rgb(0 0 0 / 0.75) 22%,
+    black 40%,
+    black 60%,
+    rgb(0 0 0 / 0.75) 78%,
+    transparent
+  );
+}
+
+/*
+ * No perspective: the rows still curve away (rotateX squashes them), but the
+ * centre row now lands exactly under the library's highlight copy of it.
+ * With perspective it sat a few percent larger and the two ghosted.
+ */
+.wheel-rack [data-rwp-wrapper] {
+  perspective: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

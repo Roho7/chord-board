@@ -19,10 +19,11 @@ export interface VoicingWindow {
 export const PAD_WINDOW: VoicingWindow = { low: 35, high: 86, bassOctaves: 2 };
 
 /**
- * Organs like it close and a little higher — the harmonics stack up fast, and a
- * low bass note turns the whole thing to mud. Only one octave of bass drop.
+ * A string section is stacked, not clustered: violins up top, a cello two
+ * octaves under. Keep the tones above the viola floor — sawtooth ensembles turn
+ * to porridge below C3 — and take the full two octaves of bass for the cello.
  */
-export const ORGAN_WINDOW: VoicingWindow = { low: 58, high: 69, bassOctaves: 1 }
+export const STRINGS_WINDOW: VoicingWindow = { low: 52, high: 81, bassOctaves: 2 };
 
 /** Wider spread, and the sampler has real low end — but the same pedal problem. */
 export const PIANO_WINDOW: VoicingWindow = { low: 52, high: 79, bassOctaves: 2 };

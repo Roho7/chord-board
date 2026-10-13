@@ -10,6 +10,12 @@ import type {
 } from './engine';
 import { createToneEngine } from './toneEngine';
 import { DEFAULT_PATCH, toSynthOptions, type SynthPatch } from './synthPatch';
+import {
+  DEFAULT_STRINGS,
+  ENSEMBLE_RATES,
+  toStringsOptions,
+  type StringsPatch,
+} from './stringsPatch';
 
 /**
  * The rack: both instruments alive at once behind a shared output gain.
@@ -72,6 +78,26 @@ let synthChannel: {
 let patch: SynthPatch = DEFAULT_PATCH;
 
 /**
+ * The string machine's live nodes, held for the same reason as the synth's.
+ *
+ * Frequency signals are typed loosely because Tone declares them as `Frequency`
+ * — we only ever write a number, but the read type includes strings like "C4".
+ */
+interface FrequencySignal {
+  value: number | string;
+}
+
+let stringsChannel: {
+  synth: { set(options: object): unknown; volume: { value: number } };
+  tone: { frequency: FrequencySignal; Q: { value: number } };
+  fast: { wet: { value: number }; frequency: FrequencySignal; depth: number };
+  slow: { wet: { value: number }; frequency: FrequencySignal; depth: number };
+  hall: { wet: { value: number } };
+} | null = null;
+
+let strings: StringsPatch = DEFAULT_STRINGS;
+
+/**
  * Reshape the synth. Safe before the rack exists — the patch is remembered and
  * applied when it is built, so the panel works before the first note.
  */
@@ -83,6 +109,35 @@ export function setSynthPatch(next: SynthPatch): void {
   synthChannel.drive.distortion = next.drive;
   synthChannel.drive.wet.value = next.drive;
   synthChannel.reverb.wet.value = next.reverb;
+}
+
+/**
+ * Reshape the strings. Safe before the rack exists, like `setSynthPatch`.
+ *
+ * The two chorus stages share one rate control: they keep their ratio, because
+ * it is the difference between them that reads as several players rather than
+ * as one detuned one.
+ */
+export function setStringsPatch(next: StringsPatch): void {
+  strings = next;
+  if (!stringsChannel) return;
+  const { synth, tone, fast, slow, hall } = stringsChannel;
+
+  synth.set(toStringsOptions(next));
+  synth.volume.value = next.level;
+
+  tone.frequency.value = next.tone;
+  tone.Q.value = next.resonance;
+
+  fast.wet.value = next.ensemble;
+  fast.frequency.value = ENSEMBLE_RATES.fast * next.rate;
+  fast.depth = next.depth * 0.55;
+
+  slow.wet.value = next.ensemble;
+  slow.frequency.value = ENSEMBLE_RATES.slow * next.rate;
+  slow.depth = next.depth;
+
+  hall.wet.value = next.reverb;
 }
 
 async function buildRack(): Promise<Rack> {
@@ -98,7 +153,7 @@ async function buildRack(): Promise<Rack> {
   const compressor = new Tone.Compressor(-18, 3).connect(reverb);
 
   // The synth gets its own drive and reverb send so the panel can reshape it
-  // without touching the organ or the piano, and a MonoSynth voice so there is
+  // without touching the other instruments, and a MonoSynth voice so there is
   // a real filter and filter envelope to control.
   const synthReverb = new Tone.Reverb({ decay: 2.6, wet: patch.reverb }).connect(compressor);
   const drive = new Tone.Distortion({ distortion: patch.drive, wet: patch.drive }).connect(
@@ -111,22 +166,53 @@ async function buildRack(): Promise<Rack> {
 
   synthChannel = { synth, drive, reverb: synthReverb };
 
-  // Drawbar organ: no filter sweep, no decay — just a fixed stack of harmonics
-  // that is either on or off. The partials are the classic 16'/8'/5⅓'/4'/2⅔'/2'
-  // drawbar spread, and the chorus stands in for a Leslie.
-  const leslie = new Tone.Chorus({ frequency: 4.6, delayTime: 3, depth: 0.7, wet: 0.5 })
-    .connect(compressor)
+  // String machine, not a sampled orchestra: a detuned saw stack behind two
+  // chorus stages, which is how the Solina and its imitators faked a section.
+  // Synthesised means it is playable on the first keypress, like the synth.
+  // Reverb decay is fixed and the panel only moves the send: changing decay
+  // regenerates the impulse response, which drops out mid-chord.
+  const hall = new Tone.Reverb({ decay: 4, wet: strings.reverb }).connect(compressor);
+
+  // Two chorus stages at different rates is the whole trick — one alone reads as
+  // a wobble, two beat against each other and read as several players.
+  const ensembleFast = new Tone.Chorus({
+    frequency: ENSEMBLE_RATES.fast * strings.rate,
+    delayTime: 2,
+    depth: strings.depth * 0.55,
+    wet: strings.ensemble,
+  })
+    .connect(hall)
+    .start();
+  const ensembleSlow = new Tone.Chorus({
+    frequency: ENSEMBLE_RATES.slow * strings.rate,
+    delayTime: 4.5,
+    depth: strings.depth,
+    wet: strings.ensemble,
+  })
+    .connect(ensembleFast)
     .start();
 
-  const organ = new Tone.PolySynth(Tone.Synth, {
-    oscillator: {
-      type: 'custom',
-      partials: [1, 0.55, 0.8, 0.4, 0, 0.25, 0, 0.18],
-    },
-    envelope: { attack: 0.006, decay: 0, sustain: 1, release: 0.14 },
-  });
-  organ.volume.value = -16;
-  organ.connect(leslie);
+  // Saws this wide are all buzz up top; roll it off where a bow stops biting.
+  // One filter for the whole section rather than one per voice — same sound,
+  // and it leaves a single node for the panel to move.
+  const bowTone = new Tone.Filter({
+    type: 'lowpass',
+    frequency: strings.tone,
+    rolloff: -12,
+    Q: strings.resonance,
+  }).connect(ensembleSlow);
+
+  const stringSection = new Tone.PolySynth(Tone.Synth, toStringsOptions(strings));
+  stringSection.volume.value = strings.level;
+  stringSection.connect(bowTone);
+
+  stringsChannel = {
+    synth: stringSection,
+    tone: bowTone,
+    fast: ensembleFast,
+    slow: ensembleSlow,
+    hall,
+  };
 
   // Both sampled instruments announce themselves the same way, so the toggle can
   // stay disabled with a reason until each one is genuinely playable.
@@ -169,7 +255,7 @@ async function buildRack(): Promise<Rack> {
   return {
     engines: {
       synth: createToneEngine(synth),
-      organ: createToneEngine(organ),
+      strings: createToneEngine(stringSection),
       piano: createToneEngine(piano),
       guitar: createToneEngine(guitar),
     },
@@ -224,6 +310,7 @@ export interface Voice extends VoiceHandle {
 let nextVoiceId = 1;
 
 export function attack(notes: Midi[], velocity = 0.8, options?: NoteOnOptions): Voice {
+  const instrument = active;
   const voice: Voice = {
     id: nextVoiceId++,
     notes,
@@ -233,12 +320,12 @@ export function attack(notes: Midi[], velocity = 0.8, options?: NoteOnOptions): 
   };
 
   if (rack) {
-    voice.engine = rack.engines[active];
+    voice.engine = rack.engines[instrument];
     voice.inner = voice.engine.noteOn(notes, velocity, options);
   } else {
     void ensureRack().then((built) => {
       if (voice.released) return;
-      voice.engine = built.engines[active];
+      voice.engine = built.engines[instrument];
       // Read `voice.notes`, not the captured argument: a modifier pressed while
       // the rack was still booting has already rewritten them.
       voice.inner = voice.engine.noteOn(voice.notes, velocity, options);

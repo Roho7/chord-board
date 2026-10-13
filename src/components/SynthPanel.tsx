@@ -35,8 +35,6 @@ const ROLLOFFS: ReadonlyArray<{ value: Rolloff; label: string }> = [
 export function SynthPanel() {
   const patch = useAppStore((s) => s.patch);
   const setPatch = useAppStore((s) => s.setPatch);
-  const instrument = useAppStore((s) => s.instrument);
-  const setInstrument = useAppStore((s) => s.setInstrument);
 
   // Typed shorthand: `set('cutoff')` returns a handler for that one field.
   const set =
@@ -48,24 +46,13 @@ export function SynthPanel() {
     <div className="flex flex-col gap-4">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="font-mono text-sm font-bold tracking-[0.3em] uppercase">Synth</h2>
-        <div className="flex items-center gap-3">
-          {instrument !== 'synth' && (
-            <button
-              type="button"
-              onClick={() => setInstrument('synth')}
-              className="rounded-md bg-ink-raised px-3 py-1.5 font-mono text-xs tracking-[0.15em] text-ember uppercase hover:bg-ink-edge"
-            >
-              Not playing — switch to synth
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setPatch(null)}
-            className="rounded-md bg-ink-raised px-3 py-1.5 font-mono text-xs tracking-[0.15em] text-bone-dim uppercase hover:text-bone"
-          >
-            Reset
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setPatch(null)}
+          className="rounded-md bg-ink-raised px-3 py-1.5 font-mono text-xs tracking-[0.15em] text-bone-dim uppercase hover:text-bone"
+        >
+          Reset
+        </button>
       </header>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">

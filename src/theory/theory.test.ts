@@ -15,7 +15,6 @@ import { accidentalForKey, makeScale, MODE_NAMES } from './scales';
 import {
   chordTones,
   invertVoicing,
-  ORGAN_WINDOW,
   PAD_WINDOW,
   spreadVoicing,
   transposeVoicing,
@@ -386,9 +385,9 @@ describe('octave shift', () => {
   });
 
   it('is unconditional — a wide window cannot override it', () => {
-    // The organ window is six octaves, so voice leading would happily leave the
+    // The pad window spans four octaves, so voice leading would happily leave the
     // chord where it was if the octave came from the window instead.
-    const wide = voice(buildChord(scale, 0, 3), null, ORGAN_WINDOW);
+    const wide = voice(buildChord(scale, 0, 3), null, PAD_WINDOW);
     expect(chordTones(transposeVoicing(wide, -1))).toEqual(
       chordTones(wide).map((n) => n - 12),
     );
