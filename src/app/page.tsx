@@ -1,17 +1,25 @@
 import { ChordBoard } from '@/components/ChordBoard';
+import Image from 'next/image';
+import { SelectorDrawers } from '@/components/SelectorDrawers';
 
 export default function Page() {
   return (
     // The pads sit at the top and never move. Everything else — legend, scale,
     // synth — shares the space underneath, one tab at a time. The header floats
     // over the lot, so the top padding is the room it needs.
-    <main className="mx-auto flex h-full w-full max-w-[1600px] flex-col px-4 pt-20 pb-8 sm:px-8">
-      <header className="pointer-events-none fixed inset-x-0 top-0 z-20 flex justify-center p-4">
-        <div className="pointer-events-auto flex items-center gap-2.5 rounded-full border border-ink-edge bg-ink-raised/80 py-1.5 pr-4 pl-3 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur">
-          <span aria-hidden className="size-1.5 rounded-full bg-accent-soft shadow-[0_0_10px_var(--color-accent)]" />
+    <main className="mx-auto flex h-full w-full max-w-[1600px] flex-col px-4 pt-20 pb-8 sm:px-8 phone:pb-4 phone-landscape:px-4 phone-landscape:pt-16 phone-landscape:pb-3">
+      <header className="pointer-events-none fixed inset-x-0 top-0 z-20 flex justify-center p-4 phone-landscape:p-2.5">
+        <div className="pointer-events-auto flex items-center gap-2.5 rounded-full border border-ink-edge bg-ink-raised/80 py-1.5 pr-4 pl-3 shadow-[0_8px_32px_rgba(0,0,0,0.45)] backdrop-blur phone:py-1 phone:pr-1">
+          {/* Decorative: the wordmark beside it already names the app. */}
+          <Image src="/logo.png" alt="" width={242} height={446} priority className="h-5 w-auto" />
           <h1 className="font-mono text-[0.7rem] font-bold tracking-[0.35em] text-bone uppercase">
             Chord Board
           </h1>
+          {/* Phones keep key, mode and sound up here, a drawer each. */}
+          <div className="hidden items-center gap-2.5 phone:flex">
+            <span aria-hidden className="h-4 w-px bg-white/10" />
+            <SelectorDrawers />
+          </div>
         </div>
       </header>
 

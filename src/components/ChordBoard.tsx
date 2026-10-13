@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { type CSSProperties, useEffect, useState } from 'react';
 import { prefetchTone } from '@/audio/rack';
 import {
   degreeForCode,
@@ -16,8 +16,11 @@ import { useAppStore } from '@/state/store';
 import { chordAt, chordColour, type ChordModifiers, type ExtraVoice } from '@/theory/chords';
 import { makeScale } from '@/theory/scales';
 import { ChordPad, type PadState } from './ChordPad';
+import { ACCENT_COLOUR, BASS_COLOUR, type ControlColour, MODIFIER_COLOURS } from './controlColours';
 import { padTint } from './padTint';
 import { SoundPanel } from './SoundPanel';
+import { RotateHint } from './RotateHint';
+import { TouchSurface } from './TouchSurface';
 import { WheelRack } from './WheelRack';
 
 type View = 'keys' | 'sound';
@@ -60,13 +63,17 @@ export function ChordBoard() {
   }
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col gap-6">
+    <div className="flex min-h-0 w-full flex-1 flex-col gap-6 phone:gap-3 phone-landscape:flex-row">
+      <RotateHint />
+
       {/*
-        Nine columns, each pad spanning two, with the lower row offset by one.
-        That reproduces the keyboard's half-key stagger exactly and keeps both
-        rows inside the same width — so the pads sit where the keys do.
+        With a keyboard to mirror: nine columns, each pad spanning two and the
+        lower row offset by one — the keyboard's half-key stagger, so the pads
+        sit where the keys do. Phones get a launchpad instead, in degree order
+        and filling whatever height is left: 4×2 sideways (I–IV over V–I′),
+        2×4 upright.
       */}
-      <div className="grid shrink-0 grid-cols-9 gap-2 sm:gap-3">
+      <div className="grid shrink-0 grid-cols-9 gap-2 sm:gap-3 phone:min-h-0 phone:flex-1 phone:gap-1.5 phone-landscape:grid-cols-4 phone-landscape:grid-rows-2 phone-portrait:grid-cols-2 phone-portrait:grid-rows-4">
         {KEY_ROWS.map((row, rowIndex) =>
           row.map((code, column) => {
             const degree = degreeForCode(code);
@@ -92,8 +99,17 @@ export function ChordBoard() {
             return (
               <div
                 key={code}
-                className="col-span-2"
-                style={{ gridRow: rowIndex + 1, gridColumnStart: rowIndex + column * 2 + 1 }}
+                className="[grid-column:var(--key-col)/span_2] [grid-row:var(--key-row)] phone-landscape:[grid-column:var(--wide-col)] phone-landscape:[grid-row:var(--wide-row)] phone-portrait:[grid-column:var(--tall-col)] phone-portrait:[grid-row:var(--tall-row)]"
+                style={
+                  {
+                    '--key-row': rowIndex + 1,
+                    '--key-col': rowIndex + column * 2 + 1,
+                    '--wide-row': Math.floor(degree / 4) + 1,
+                    '--wide-col': (degree % 4) + 1,
+                    '--tall-row': Math.floor(degree / 2) + 1,
+                    '--tall-col': (degree % 2) + 1,
+                  } as CSSProperties
+                }
               >
                 <ChordPad
                   chord={chordAt(scale, degree, colour)}
@@ -109,11 +125,20 @@ export function ChordBoard() {
         )}
       </div>
 
+      {/*
+        Touch has no control keys: the modifier touchpad and its buttons take
+        their place. Sideways it sits to the left of the pads, for the hand
+        that isn't playing; upright and on tablets it sits underneath.
+      */}
+      <div className="hidden h-48 shrink-0 pointer-coarse:block phone:block phone-portrait:h-64 phone-landscape:order-first phone-landscape:h-auto phone-landscape:w-[42%]">
+        <TouchSurface />
+      </div>
+
       {/* Tabs sit directly under the pads — the pads themselves never move. */}
       <div
         role="tablist"
         aria-label="Panel"
-        className="flex shrink-0 gap-1 self-start rounded-lg bg-ink-raised p-1"
+        className="flex shrink-0 gap-1 self-start rounded-lg bg-ink-raised p-1 phone:hidden"
       >
         {VIEWS.map(({ id, label }) => (
           <button
@@ -138,7 +163,8 @@ export function ChordBoard() {
         Both panels stay mounted and the track slides between them: the keyboard
         listener lives up here, so you can keep playing while the synth is open.
       */}
-      <div className="min-h-0 flex-1 overflow-hidden border-t border-ink-edge pt-6">
+      {/* On phones the wheels live in header drawers and there is no legend to show. */}
+      <div className="min-h-0 flex-1 overflow-hidden border-t border-ink-edge pt-6 phone:hidden">
         <div
           className="flex h-full w-[200%] transition-transform duration-300 ease-out"
           style={{ transform: view === 'keys' ? 'translateX(0)' : 'translateX(-50%)' }}
@@ -211,14 +237,12 @@ function KeyLegend({
   }
 
   /** Lit legend keys wear the colour they put on the pads, which teaches the mapping. */
-  function litColour(control: LegendControl): { colour: string; text: string } {
-    if (control.kind === 'modifier' && control.name in MODIFIER_COLOURS) {
-      return MODIFIER_COLOURS[control.name as keyof typeof MODIFIER_COLOURS]!;
-    }
+  function litColour(control: LegendControl): ControlColour {
+    if (control.kind === 'modifier') return MODIFIER_COLOURS[control.name] ?? ACCENT_COLOUR;
     if (control.kind === 'sustain' || (control.kind === 'extra' && control.voice !== 'chordOctave')) {
-      return { colour: 'var(--color-mod-bass)', text: 'text-white' };
+      return BASS_COLOUR;
     }
-    return { colour: 'var(--color-accent)', text: 'text-white' };
+    return ACCENT_COLOUR;
   }
 
   // One key width and one row height. Everything else is a multiple of these.
@@ -227,7 +251,8 @@ function KeyLegend({
 
   return (
     <div
-      className="relative shrink-0"
+      // A picture of the keyboard is noise on a phone — there is no keyboard.
+      className="relative shrink-0 phone:hidden pointer-coarse:hidden"
       style={{ width: `${LEGEND_WIDTH * UNIT}rem`, height: `${LEGEND_ROWS * ROW}rem` }}
     >
       {KEY_LEGEND.map(({ key, row, x, width, caption, control }) => {
@@ -283,11 +308,3 @@ function KeyLegend({
     </div>
   );
 }
-
-const MODIFIER_COLOURS: Partial<Record<keyof ChordModifiers, { colour: string; text: string }>> = {
-  minor: { colour: 'var(--color-mod-minor)', text: 'text-white' },
-  seventh: { colour: 'var(--color-mod-seventh)', text: 'text-white' },
-  dominant: { colour: 'var(--color-mod-dominant)', text: 'text-white' },
-  suspended: { colour: 'var(--color-mod-suspended)', text: 'text-ink' },
-  ninth: { colour: 'var(--color-mod-ninth)', text: 'text-ink' },
-};

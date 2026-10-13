@@ -13,7 +13,7 @@ import { noteName, PITCH_CLASSES, type PitchClass } from '@/theory/notes';
 import { accidentalForKey, MODE_LABELS, MODE_NAMES, type ModeName } from '@/theory/scales';
 
 /** Synth and strings are synthesised and playable at once; the rest stream samples. */
-const INSTRUMENTS: Array<{ name: InstrumentName; label: string }> = [
+export const INSTRUMENTS: Array<{ name: InstrumentName; label: string }> = [
   { name: 'synth', label: 'Synth' },
   { name: 'strings', label: 'Strings' },
   { name: 'piano', label: 'Piano' },
@@ -25,75 +25,123 @@ const ITEM_HEIGHT = 30;
 const VISIBLE = 16;
 
 /**
- * Key, mode and instrument as three drums in one housing, like the rotary
- * selectors on a hardware unit. Scroll or drag to turn them.
+ * Key, mode and instrument as three drums side by side, like the rotary
+ * selectors on a hardware unit. Scroll or drag to turn them. On phones each
+ * drum lives in its own drawer instead (see `SelectorDrawers`).
  */
 export function WheelRack() {
-  const root = useAppStore((s) => s.root);
-  const mode = useAppStore((s) => s.mode);
-  const instrument = useAppStore((s) => s.instrument);
-  const samplesReady = useAppStore((s) => s.samplesReady);
-  const setRoot = useAppStore((s) => s.setRoot);
-  const setMode = useAppStore((s) => s.setMode);
-  const setInstrument = useAppStore((s) => s.setInstrument);
+  return (
+    <WheelHost className="flex shrink-0 gap-3 sm:gap-6">
+      <Drum label="Key" width="w-14 sm:w-20">
+        <KeyWheel />
+      </Drum>
+      <Drum label="Mode" width="w-36 sm:w-44">
+        <ModeWheel />
+      </Drum>
+      <Drum label="Sound" width="w-24 sm:w-32">
+        <SoundWheel />
+      </Drum>
+    </WheelHost>
+  );
+}
 
-  // Spell each key the way it is actually written in the current mode.
-  const keyOptions: WheelPickerOption<PitchClass>[] = PITCH_CLASSES.map((pc) => ({
-    value: pc,
-    label: noteName(pc, accidentalForKey(pc, mode)),
-  }));
-
-  const modeOptions: WheelPickerOption<ModeName>[] = MODE_NAMES.map((name) => ({
-    value: name,
-    label: MODE_LABELS[name],
-  }));
-
-  const soundOptions: WheelPickerOption<InstrumentName>[] = INSTRUMENTS.map(({ name, label }) => {
-    const waiting = name in samplesReady && !samplesReady[name as keyof typeof samplesReady];
-    return { value: name, label: waiting ? `${label} …` : label, textValue: label, disabled: waiting };
-  });
-
+/**
+ * Whatever holds drums: sets their row height and how many rows show, and
+ * keeps them from stealing the keyboard.
+ */
+export function WheelHost({
+  rows = 3,
+  className = '',
+  children,
+}: {
+  rows?: number;
+  className?: string;
+  children: ReactNode;
+}) {
   return (
     <div
-      className="wheel-rack flex shrink-0 gap-6"
-      style={{ '--wheel-item': `${ITEM_HEIGHT}px` } as CSSProperties}
+      className={`wheel-rack ${className}`}
+      style={{ '--wheel-item': `${ITEM_HEIGHT}px`, '--wheel-rows': rows } as CSSProperties}
       // Clicking a drum must not focus it: a focused drum would read the pad
       // keys as type-ahead and jump to whatever letter you just played.
       onMouseDown={(event) => event.preventDefault()}
       onKeyDownCapture={forwardPlayingKeys}
     >
-      <Drum label="Key" width="w-20">
-        <WheelPicker
-          options={keyOptions}
-          value={root}
-          onValueChange={setRoot}
-          infinite
-          optionItemHeight={ITEM_HEIGHT}
-          visibleCount={VISIBLE}
-          classNames={CLASSES}
-        />
-      </Drum>
-      <Drum label="Mode" width="w-44">
-        <WheelPicker
-          options={modeOptions}
-          value={mode}
-          onValueChange={setMode}
-          optionItemHeight={ITEM_HEIGHT}
-          visibleCount={VISIBLE}
-          classNames={CLASSES}
-        />
-      </Drum>
-      <Drum label="Sound" width="w-32">
-        <WheelPicker
-          options={soundOptions}
-          value={instrument}
-          onValueChange={setInstrument}
-          optionItemHeight={ITEM_HEIGHT}
-          visibleCount={VISIBLE}
-          classNames={CLASSES}
-        />
-      </Drum>
+      {children}
     </div>
+  );
+}
+
+export function KeyWheel() {
+  const root = useAppStore((s) => s.root);
+  const mode = useAppStore((s) => s.mode);
+  const setRoot = useAppStore((s) => s.setRoot);
+
+  // Spell each key the way it is actually written in the current mode.
+  const options: WheelPickerOption<PitchClass>[] = PITCH_CLASSES.map((pc) => ({
+    value: pc,
+    label: noteName(pc, accidentalForKey(pc, mode)),
+  }));
+
+  return (
+    <WheelPickerWrapper>
+      <WheelPicker
+        options={options}
+        value={root}
+        onValueChange={setRoot}
+        infinite
+        optionItemHeight={ITEM_HEIGHT}
+        visibleCount={VISIBLE}
+        classNames={CLASSES}
+      />
+    </WheelPickerWrapper>
+  );
+}
+
+export function ModeWheel() {
+  const mode = useAppStore((s) => s.mode);
+  const setMode = useAppStore((s) => s.setMode);
+
+  const options: WheelPickerOption<ModeName>[] = MODE_NAMES.map((name) => ({
+    value: name,
+    label: MODE_LABELS[name],
+  }));
+
+  return (
+    <WheelPickerWrapper>
+      <WheelPicker
+        options={options}
+        value={mode}
+        onValueChange={setMode}
+        optionItemHeight={ITEM_HEIGHT}
+        visibleCount={VISIBLE}
+        classNames={CLASSES}
+      />
+    </WheelPickerWrapper>
+  );
+}
+
+export function SoundWheel() {
+  const instrument = useAppStore((s) => s.instrument);
+  const samplesReady = useAppStore((s) => s.samplesReady);
+  const setInstrument = useAppStore((s) => s.setInstrument);
+
+  const options: WheelPickerOption<InstrumentName>[] = INSTRUMENTS.map(({ name, label }) => {
+    const waiting = name in samplesReady && !samplesReady[name as keyof typeof samplesReady];
+    return { value: name, label: waiting ? `${label} …` : label, textValue: label, disabled: waiting };
+  });
+
+  return (
+    <WheelPickerWrapper>
+      <WheelPicker
+        options={options}
+        value={instrument}
+        onValueChange={setInstrument}
+        optionItemHeight={ITEM_HEIGHT}
+        visibleCount={VISIBLE}
+        classNames={CLASSES}
+      />
+    </WheelPickerWrapper>
   );
 }
 
@@ -110,7 +158,7 @@ function Drum({ label, width, children }: { label: string; width: string; childr
       <span className="text-center font-mono text-[0.6rem] tracking-[0.3em] text-bone-dim/60 uppercase">
         {label}
       </span>
-      <WheelPickerWrapper>{children}</WheelPickerWrapper>
+      {children}
     </div>
   );
 }

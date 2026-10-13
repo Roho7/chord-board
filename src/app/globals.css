@@ -1,4 +1,22 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+
+/*
+ * The phone layout: a launchpad with a modifier touchpad, no keyboard legend.
+ * Landscape is the main way to play it; portrait stacks the same parts.
+ * A narrow desktop window counts as portrait — it has no room for the
+ * keyboard picture either.
+ */
+@custom-variant phone-portrait (@media (max-width: 639px) and (min-height: 501px));
+@custom-variant phone-landscape (@media (pointer: coarse) and (max-height: 500px) and (orientation: landscape));
+@custom-variant phone {
+  @media (max-width: 639px) and (min-height: 501px) {
+    @slot;
+  }
+  @media (pointer: coarse) and (max-height: 500px) and (orientation: landscape) {
+    @slot;
+  }
+}
 
 /*
  * Palette: the logo's ribbons — ultramarine into violet, with a cream-gold glow
@@ -22,6 +40,13 @@
   --color-mod-ninth: #f5e2a8;
   --color-mod-bass: #ff6a4d;
 
+  /* shadcn's names, pointed at this palette so its components need no restyle. */
+  --color-background: var(--color-ink-raised);
+  --color-foreground: var(--color-bone);
+  --color-muted: var(--color-ink-edge);
+  --color-muted-foreground: var(--color-bone-dim);
+  --color-border: rgb(255 255 255 / 0.1);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -44,6 +69,8 @@ body {
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  /* No long-press callout menu over pads and chips on iOS. */
+  -webkit-touch-callout: none;
   overscroll-behavior: none;
 }
 
@@ -128,12 +155,12 @@ body {
 }
 
 /*
- * The selector drums sit straight on the page: three rows tall (the pick and
- * one either side), no housing, fading out top and bottom. The library sets
+ * The selector drums sit straight on the page: three rows tall by default (the
+ * pick and one either side), no housing, fading out top and bottom. The library sets
  * the drum height inline, hence !important.
  */
 .wheel-rack [data-rwp] {
-  height: calc(var(--wheel-item) * 3) !important;
+  height: calc(var(--wheel-item) * var(--wheel-rows, 3)) !important;
   mask-image: linear-gradient(
     to bottom,
     transparent,
@@ -152,6 +179,17 @@ body {
  */
 .wheel-rack [data-rwp-wrapper] {
   perspective: none;
+}
+
+/*
+ * The library sizes its highlight copy at 1rem and the drum rows at 0.875rem,
+ * unlayered — so they beat Tailwind's layered text utilities, and the two
+ * copies of the selected row never line up. Pin both to one size here.
+ */
+.wheel-rack [data-rwp-option],
+.wheel-rack [data-rwp-highlight-wrapper] {
+  font-size: 0.875rem;
+  font-weight: 700;
 }
 
 @media (prefers-reduced-motion: reduce) {

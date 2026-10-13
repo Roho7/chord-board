@@ -66,10 +66,13 @@ export function ChordPad({ chord, tint, keyLabel, state, onAttack, onRelease }: 
       onContextMenu={(event) => event.preventDefault()}
       style={tint.vars}
       className={[
-        // Fixed height rather than an aspect ratio: four-across pads are wide, and
-        // a portrait ratio would make each row taller than the board it sits in.
-        'pad-tint group relative isolate flex h-24 w-full flex-col items-center justify-center sm:h-28 lg:h-32',
-        'overflow-hidden rounded-xl px-2 transition-[transform,background-color,border-color,box-shadow]',
+        // A fixed height beside a keyboard; on phones the pads fill whatever
+        // the grid gives them, launchpad-style. `touch-none` hands every finger
+        // straight to the pad — no scroll, no double-tap zoom, no delay.
+        'pad-tint group relative isolate flex h-24 w-full touch-none flex-col items-center justify-center',
+        'sm:h-28 lg:h-32 phone:h-full',
+        'overflow-hidden rounded-lg px-1 sm:rounded-xl sm:px-2',
+        'transition-[transform,background-color,border-color,box-shadow]',
         'duration-75 ease-out outline-none',
         'focus-visible:ring-4 focus-visible:ring-accent-soft/70',
         SURFACE[state],
@@ -88,7 +91,8 @@ export function ChordPad({ chord, tint, keyLabel, state, onAttack, onRelease }: 
 
       <span
         className={[
-          'absolute top-2 left-2 z-10 flex h-7 w-7 items-center justify-center rounded-md',
+          // No key labels where there is no keyboard to press them on.
+          'absolute top-2 left-2 z-10 flex h-7 w-7 phone:hidden pointer-coarse:hidden items-center justify-center rounded-md',
           'font-mono text-sm font-bold',
           BADGE[state],
         ].join(' ')}
@@ -98,7 +102,7 @@ export function ChordPad({ chord, tint, keyLabel, state, onAttack, onRelease }: 
 
       <span
         className={[
-          'relative z-10 text-[clamp(1.75rem,4.5vw,3.25rem)] leading-none font-extrabold tracking-tight tabular-nums',
+          'relative z-10 text-[clamp(1.75rem,4.5vw,3.25rem)] phone:text-[clamp(1.5rem,7vmin,2.5rem)] leading-none font-extrabold tracking-tight tabular-nums',
           state === 'pressed' ? 'glass-glyph' : '',
         ].join(' ')}
       >
@@ -107,7 +111,7 @@ export function ChordPad({ chord, tint, keyLabel, state, onAttack, onRelease }: 
 
       <span
         className={[
-          'relative z-10 mt-2 font-mono text-base tracking-[0.2em] uppercase',
+          'relative z-10 mt-2 font-mono text-base tracking-[0.2em] uppercase phone:mt-1 phone:text-xs',
           NUMERAL[state],
         ].join(' ')}
       >
