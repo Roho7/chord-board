@@ -1,5 +1,6 @@
 'use client';
 
+import { resumeAudio } from '@/audio/unlock';
 import { create } from 'zustand';
 import {
   attack,
@@ -437,6 +438,9 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   unlockAudio() {
+    // Every time, not just the first: a resume refused outside a gesture must
+    // get another try. Only the one-off setup below is guarded.
+    resumeAudio();
     if (unlocked) return;
     unlocked = true;
     void ensureRack();

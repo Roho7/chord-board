@@ -1,5 +1,6 @@
 'use client';
 
+import { audioContext } from './unlock';
 import type { Midi } from '@/theory/notes';
 import type {
   AudioEngine,
@@ -143,7 +144,12 @@ export function setStringsPatch(next: StringsPatch): void {
 async function buildRack(): Promise<Rack> {
   const Tone = await import('tone');
 
-  // The context starts suspended; without this nothing plays and nothing errors.
+  // Build on the context the gesture handlers already created and resumed
+  // (see unlock.ts) — Tone's own would be created too late to be unlocked.
+  // Dispose Tone's default one: importing Tone made it, nothing uses it, and
+  // phones cap how many contexts a page may hold.
+  Tone.setContext(audioContext(), true);
+  // Belt and braces: a no-op if the gesture already got it running.
   await Tone.start();
   // Default lookAhead is 100ms, which you can feel when playing along to something.
   Tone.getContext().lookAhead = 0.01;

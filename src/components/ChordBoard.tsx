@@ -2,6 +2,7 @@
 
 import { type CSSProperties, useEffect, useState } from 'react';
 import { prefetchTone } from '@/audio/rack';
+import { installGestureUnlock } from '@/audio/unlock';
 import {
   degreeForCode,
   KEY_LABELS,
@@ -56,6 +57,7 @@ export function ChordBoard() {
   const [view, setView] = useState<View>('keys');
 
   useEffect(prefetchTone, []);
+  useEffect(installGestureUnlock, []);
 
   function handleAttack(degree: number) {
     unlockAudio();
