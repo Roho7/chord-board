@@ -11,6 +11,6 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['src/theory/**/*.test.ts', 'src/audio/**/*.test.ts'],
+    include: ['src/theory/**/*.test.ts', 'src/audio/**/*.test.ts', 'src/tutorial/**/*.test.ts'],
   },
 });
