@@ -21,6 +21,7 @@ import { ACCENT_COLOUR, BASS_COLOUR, type ControlColour, MODIFIER_COLOURS } from
 import { padTint } from './padTint';
 import { SoundPanel } from './SoundPanel';
 import { RotateHint } from './RotateHint';
+import { Tutorial } from './Tutorial';
 import { TouchSurface } from './TouchSurface';
 import { WheelRack } from './WheelRack';
 
@@ -67,6 +68,7 @@ export function ChordBoard() {
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col gap-6 phone:gap-3 phone-landscape:flex-row">
       <RotateHint />
+      <Tutorial />
 
       {/*
         With a keyboard to mirror: nine columns, each pad spanning two and the
