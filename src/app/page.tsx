@@ -27,14 +27,14 @@ export default function Page() {
       <ChordBoard />
 
       {/* Fixed and tiny, so it costs the playing surface nothing on a phone. */}
-      <footer className="pointer-events-none fixed inset-x-0 bottom-0 z-10 flex justify-center pb-1 font-mono text-[0.6rem] tracking-[0.15em] text-bone-dim/50">
+      <footer className="pointer-events-none fixed inset-x-0 bottom-0 z-10 flex justify-center pb-1 font-mono text-[0.6rem] tracking-[0.15em] text-bone-dim/50 phone:pb-0.5 phone:text-[0.5rem] phone:tracking-[0.1em] phone:text-bone-dim/30">
         <p>
           Built by{' '}
           <a
             href="https://github.com/Roho7"
             target="_blank"
             rel="noopener noreferrer"
-            className="pointer-events-auto text-bone-dim underline-offset-2 hover:text-bone hover:underline"
+            className="pointer-events-auto text-bone-dim underline-offset-2 phone:text-bone-dim/60 hover:text-bone hover:underline"
           >
             Roho
           </a>
