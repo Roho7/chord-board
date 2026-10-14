@@ -200,3 +200,34 @@ body {
     animation-duration: 0.01ms !important;
   }
 }
+
+/*
+ * The tutorial's pointer: an outline that breathes outward. Nothing here takes
+ * space or dims the board — it is only ever drawn on top.
+ */
+.tutorial-ring {
+  border: 2px solid var(--color-accent-soft);
+  box-shadow: 0 0 18px -2px var(--color-accent);
+  animation: tutorial-ring 1.4s ease-out infinite;
+}
+
+.tutorial-ring[data-solved='true'] {
+  border-color: var(--color-mod-ninth);
+  box-shadow: 0 0 22px -2px var(--color-mod-ninth);
+  animation: none;
+}
+
+@keyframes tutorial-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgb(169 155 255 / 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 14px rgb(169 155 255 / 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tutorial-ring {
+    animation: none;
+  }
+}

@@ -31,7 +31,7 @@ const VISIBLE = 16;
  */
 export function WheelRack() {
   return (
-    <WheelHost className="flex shrink-0 gap-3 sm:gap-6">
+    <WheelHost className="flex shrink-0 gap-3 sm:gap-6" data-tutorial="wheels">
       <Drum label="Key" width="w-14 sm:w-20">
         <KeyWheel />
       </Drum>
@@ -53,13 +53,16 @@ export function WheelHost({
   rows = 3,
   className = '',
   children,
+  'data-tutorial': tutorial,
 }: {
   rows?: number;
   className?: string;
   children: ReactNode;
+  'data-tutorial'?: string;
 }) {
   return (
     <div
+      data-tutorial={tutorial}
       className={`wheel-rack ${className}`}
       style={{ '--wheel-item': `${ITEM_HEIGHT}px`, '--wheel-rows': rows } as CSSProperties}
       // Clicking a drum must not focus it: a focused drum would read the pad

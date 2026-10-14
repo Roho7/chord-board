@@ -101,6 +101,7 @@ export function ChordBoard() {
             return (
               <div
                 key={code}
+                data-tutorial={`pad-${KEY_LABELS[degree]}`}
                 className="[grid-column:var(--key-col)/span_2] [grid-row:var(--key-row)] phone-landscape:[grid-column:var(--wide-col)] phone-landscape:[grid-row:var(--wide-row)] phone-portrait:[grid-column:var(--tall-col)] phone-portrait:[grid-row:var(--tall-row)]"
                 style={
                   {
@@ -263,6 +264,7 @@ function KeyLegend({
         return (
           <span
             key={`${row}-${key}`}
+            data-tutorial={`key-${key}`}
             title={caption}
             style={{
               ...(lit && {
