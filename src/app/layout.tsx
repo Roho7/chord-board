@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Chord Board",
+  title: "Jammune",
   description: "Eight keys, eight diatonic chords. Pick a key and jam.",
 };
 
