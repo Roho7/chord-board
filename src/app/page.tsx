@@ -1,6 +1,7 @@
 import { ChordBoard } from '@/components/ChordBoard';
 import Image from 'next/image';
 import { SelectorDrawers } from '@/components/SelectorDrawers';
+import { TutorialButton } from '@/components/TutorialButton';
 
 export default function Page() {
   return (
@@ -21,6 +22,7 @@ export default function Page() {
             <span aria-hidden className="h-4 w-px bg-white/10" />
             <SelectorDrawers />
           </div>
+          <TutorialButton />
         </div>
       </header>
 
