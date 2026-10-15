@@ -5,6 +5,7 @@ import {
   WheelPicker,
   WheelPickerWrapper,
   type WheelPickerOption,
+  type WheelPickerValue,
 } from '@ncdai/react-wheel-picker';
 import type { CSSProperties, KeyboardEvent, ReactNode } from 'react';
 import type { InstrumentName } from '@/audio/engine';
@@ -87,7 +88,7 @@ export function KeyWheel() {
   }));
 
   return (
-    <WheelPickerWrapper>
+    <Stepper onStep={(dir) => setRoot(stepValue(options, root, dir, true))}>
       <WheelPicker
         options={options}
         value={root}
@@ -97,7 +98,7 @@ export function KeyWheel() {
         visibleCount={VISIBLE}
         classNames={CLASSES}
       />
-    </WheelPickerWrapper>
+    </Stepper>
   );
 }
 
@@ -111,7 +112,7 @@ export function ModeWheel() {
   }));
 
   return (
-    <WheelPickerWrapper>
+    <Stepper onStep={(dir) => setMode(stepValue(options, mode, dir, false))}>
       <WheelPicker
         options={options}
         value={mode}
@@ -120,7 +121,7 @@ export function ModeWheel() {
         visibleCount={VISIBLE}
         classNames={CLASSES}
       />
-    </WheelPickerWrapper>
+    </Stepper>
   );
 }
 
@@ -135,7 +136,7 @@ export function SoundWheel() {
   });
 
   return (
-    <WheelPickerWrapper>
+    <Stepper onStep={(dir) => setInstrument(stepValue(options, instrument, dir, false))}>
       <WheelPicker
         options={options}
         value={instrument}
@@ -144,7 +145,66 @@ export function SoundWheel() {
         visibleCount={VISIBLE}
         classNames={CLASSES}
       />
-    </WheelPickerWrapper>
+    </Stepper>
+  );
+}
+
+/**
+ * The option one step from `current`, skipping any that can't be chosen.
+ * `wrap` is for drums that go all the way round; the rest stop at their ends.
+ */
+function stepValue<T extends WheelPickerValue>(
+  options: WheelPickerOption<T>[],
+  current: T,
+  dir: -1 | 1,
+  wrap: boolean,
+): T {
+  const from = options.findIndex((option) => option.value === current);
+  for (let i = from + dir; ; i += dir) {
+    const index = wrap ? (i + options.length) % options.length : i;
+    const option = options[index];
+    if (!option || index === from) return current;
+    if (!option.disabled) return option.value;
+  }
+}
+
+/** A drum with chevrons that appear on hover and nudge it one row. */
+function Stepper({ onStep, children }: { onStep: (dir: -1 | 1) => void; children: ReactNode }) {
+  return (
+    <div className="group relative">
+      <WheelPickerWrapper>{children}</WheelPickerWrapper>
+      <Chevron dir={-1} label="Previous" onStep={onStep} />
+      <Chevron dir={1} label="Next" onStep={onStep} />
+    </div>
+  );
+}
+
+function Chevron({
+  dir,
+  label,
+  onStep,
+}: {
+  dir: -1 | 1;
+  label: string;
+  onStep: (dir: -1 | 1) => void;
+}) {
+  return (
+    <button
+      type="button"
+      tabIndex={-1}
+      aria-label={label}
+      onClick={() => onStep(dir)}
+      className={[
+        'absolute left-1/2 z-10 flex h-5 w-8 -translate-x-1/2 items-center justify-center rounded',
+        'text-bone-dim opacity-0 transition-opacity hover:text-bone group-hover:opacity-100',
+        'pointer-coarse:hidden',
+        dir === -1 ? 'top-0' : 'bottom-0',
+      ].join(' ')}
+    >
+      <svg viewBox="0 0 12 8" className="h-2 w-3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d={dir === -1 ? 'M1 6.5 6 1.5l5 5' : 'M1 1.5l5 5 5-5'} />
+      </svg>
+    </button>
   );
 }
 
