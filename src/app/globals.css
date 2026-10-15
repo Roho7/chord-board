@@ -56,6 +56,21 @@ body {
   height: 100%;
 }
 
+/*
+ * Tailwind's preflight resets buttons to the default arrow. Anything pressable
+ * gets the pointer here, once, so no component has to remember to ask for it.
+ */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"]:not([aria-disabled="true"]),
+  [role="switch"]:not([aria-disabled="true"]),
+  [role="checkbox"]:not([aria-disabled="true"]),
+  input[type="range"] {
+    cursor: pointer;
+  }
+}
+
 body {
   background-color: var(--color-ink);
   background-image:

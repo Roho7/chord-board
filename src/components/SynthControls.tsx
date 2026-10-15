@@ -31,7 +31,7 @@ export function Fader({ label, value, min, max, step, format, onChange }: FaderP
         step={step}
         value={value}
         onChange={(event) => onChange(event.target.valueAsNumber)}
-        className="accent-accent h-1.5 w-full cursor-pointer appearance-none rounded-full bg-ink-edge"
+        className="accent-accent h-1.5 w-full appearance-none rounded-full bg-ink-edge"
       />
     </label>
   );
